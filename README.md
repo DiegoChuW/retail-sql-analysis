@@ -13,11 +13,11 @@ SQL analysis of retail transactions, with Python for data preparation and Power 
 
 The findings below describe the dashboard's cleaned, known-customer transaction subset. Chart values are approximate where labels are not displayed.
 
-1. **Sales strengthened towards the end of 2011.** Monthly sales rose from roughly £0.6 million in July to a peak of about £1.1 million in November. This suggests a stronger late-year trading period, but one year of data is insufficient to establish a recurring seasonal pattern. The fall in December should not be interpreted as a full-month decline: the dataset ends on 9 December.
+1. **Sales strengthened towards the end of 2011.** Monthly sales rose from roughly £0.6 million in July to a peak of about £1.1 million in November. This suggests a stronger late-year trading period, but one year of data is insufficient to establish a recurring seasonal pattern. 
 
-2. **The leading sales product also had unusually high cancellations.** PAPER CRAFT, LITTLE BIRDIE generated approximately £170,000 in sales and a similar cancellation value. REGENCY CAKESTAND 3 TIER was the next-largest sales product at roughly £140,000. The PAPER CRAFT result warrants checking individual invoices before treating its sales rank as evidence of sustained demand; the charts do not establish that its sales and cancellations are matched transactions.
+2. **The leading sales product also had unusually high cancellations.** PAPER CRAFT, LITTLE BIRDIE generated approximately £170,000 in sales and a similar cancellation value. REGENCY CAKESTAND 3 TIER was the next-largest sales product at roughly £140,000. 
 
-3. **Two products stand out in the cancellation ranking.** PAPER CRAFT, LITTLE BIRDIE and MEDIUM CERAMIC TOP STORAGE JAR had cancellation values of approximately £170,000 and £80,000 respectively, far above the other displayed products. Review their invoice quantities and dates to investigate these large transactions. The chart alone cannot establish product defects, customer dissatisfaction, or the reason for cancellation.
+3. **Two products stand out in the cancellation ranking.** PAPER CRAFT, LITTLE BIRDIE and MEDIUM CERAMIC TOP STORAGE JAR had cancellation values of approximately £170,000 and £80,000 respectively, far above the other displayed products. 
 
 4. **The customer summary reports 18,372 purchase invoices and about £8.72 million in sales.** These are purchase counts and sales before cancellations, not unique customer counts or net revenue. Both repeat and one-purchase customers are visible, but the displayed rows do not establish the overall repeat-customer share.
 
