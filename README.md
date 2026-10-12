@@ -19,11 +19,7 @@ The findings below describe the dashboard's cleaned, known-customer transaction 
 
 3. **Two products stand out in the cancellation ranking.** PAPER CRAFT, LITTLE BIRDIE and MEDIUM CERAMIC TOP STORAGE JAR had cancellation values of approximately £170,000 and £80,000 respectively, far above the other displayed products. 
 
-4. **The customer summary reports 18,372 purchase invoices and about £8.72 million in sales.** These are purchase counts and sales before cancellations, not unique customer counts or net revenue. Both repeat and one-purchase customers are visible, but the displayed rows do not establish the overall repeat-customer share.
-
-### Follow-up
-
-Investigate the large sales and cancellations for the two standout products, calculate repeat-customer share across the full customer summary, and compare complete months when evaluating sales trends. Avoid stock or product-quality decisions based solely on the top-10 rankings.
+4. **The customer summary reports 18,372 purchase invoices and about £8.72 million in sales.** These are purchase counts and sales before cancellations, not unique customer counts or net revenue. Both repeat and one-purchase customers are visible, but the displayed rows do not establish the overall repeat-customer share.
 
 ## Files
 
