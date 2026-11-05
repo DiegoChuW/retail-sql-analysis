@@ -1,49 +1,68 @@
 # Retail Sales & Cancellation Analysis
 
-SQL analysis of retail transactions, with Python for data preparation and Power BI for reporting.
+Which products drove sales, and which had the most money tied up in cancellations? This project uses Python to clean retail invoice lines, PostgreSQL to analyze sales and customer purchases, and Power BI to present the results.
 
-## Analysis
+**Explore the project:** [Open the Power BI report](Retail%20Sales%20%26%20Cancellations.pbix) in Power BI Desktop, [read the SQL queries](analysis.sql), or [walk through the data preparation notebook](data_preparation.ipynb). To reproduce the database behind the report, follow one of the two setup options below.
 
-- Monthly sales, cancellation value, and month-over-month sales changes
-- Top 10 products by sales value
-- Customer purchase frequency and repeat purchases
-- Top 10 products by cancellation value
+## What the analysis found
 
-## Findings
+- **November 2011 was the peak sales month.** Sales rose from roughly £600,000 in July to £1.1 million in November. December covers only nine days, so its total is unsuitable for a full-month comparison.
+- **The top-selling product also led cancellations.** PAPER CRAFT, LITTLE BIRDIE recorded about £170,000 each in sales and cancellations. MEDIUM CERAMIC TOP STORAGE JAR ranked second by cancellation value at about £80,000.
+- **Customers placed 18,372 purchase invoices**, totaling about £8.72 million in sales before cancellations. The SQL groups purchases by customer to distinguish one-time and repeat buyers.
 
-The findings below describe the dashboard's cleaned, known-customer transaction subset. Chart values are approximate where labels are not displayed.
+These findings cover the cleaned transactions with known customers. Product and monthly values are approximate readings from the dashboard.
 
-1. **Sales strengthened towards the end of 2011.** Monthly sales rose from roughly £0.6 million in July to a peak of about £1.1 million in November. This suggests a stronger late-year trading period, but one year of data is insufficient to establish a recurring seasonal pattern. 
+## From workbook to database
 
-2. **The leading sales product also had unusually high cancellations.** PAPER CRAFT, LITTLE BIRDIE generated approximately £170,000 in sales and a similar cancellation value. REGENCY CAKESTAND 3 TIER was the next-largest sales product at roughly £140,000. 
+The source workbook contains 541,909 rows from December 2010 to December 2011. Python removes exact duplicates and filters out rows with missing customer IDs, invalid records, or non-merchandise stock codes. It preserves negative quantities on cancellation invoices. Customers and products use their first retained country and description, respectively. [UCI Online Retail dataset](https://doi.org/10.24432/C5BW33) · [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/)
 
-3. **Two products stand out in the cancellation ranking.** PAPER CRAFT, LITTLE BIRDIE and MEDIUM CERAMIC TOP STORAGE JAR had cancellation values of approximately £170,000 and £80,000 respectively, far above the other displayed products. 
+The tested Docker run loaded **398,070 transaction lines** across **21,754 invoices**, **4,360 customers**, and **3,675 products**. Their signed value was **£8,246,437.56**. This includes cancellations, which reduce the total. Before committing the load, the pipeline checks that PostgreSQL has the same line count and signed value as the cleaned Python data.
 
-4. **The customer summary reports 18,372 purchase invoices and about £8.72 million in sales.** These are purchase counts and sales before cancellations, not unique customer counts or net revenue. Both repeat and one-purchase customers are visible, but the displayed rows do not establish the overall repeat-customer share.
+## Reproduce the analysis
 
-## Files
+Choose **Docker** to run the complete data load or **the local notebook** to inspect the Python steps interactively. Either path prepares the four tables used by the same SQL queries. Rerunning a load replaces the contents of those tables in the selected database.
 
-| File | Purpose |
-| --- | --- |
-| `schema.sql` | PostgreSQL tables, keys, and constraints |
-| `analysis.sql` | Four analysis queries and two validation queries |
-| `data_preparation.ipynb` | Download, clean, and load the dataset |
-| `requirements.txt` | Python dependencies |
+### Option 1 — Docker
 
-## Run
+1. Start Docker Desktop (or Docker Engine with Compose v2). Open a terminal in the folder containing `compose.yaml`.
+2. In that folder, create a file named `.env` with this line. Replace the example password with your own. Git ignores this file.
+
+   ```dotenv
+   RETAIL_DB_PASSWORD=replace_with_your_password
+   ```
+
+3. Start PostgreSQL and wait for it to become healthy.
+
+   ```sh
+   docker compose up -d --wait db
+   ```
+
+4. Run the Python loader. The first run requires internet access to fetch the images, Python packages, and source workbook. The loader reuses the workbook in `data/` on subsequent runs.
+
+   ```sh
+   docker compose --profile etl run --build --rm etl
+   ```
+
+When the output ends with **`Checks passed.`**, the database is ready. Leave it running while you explore the SQL or refresh Power BI. When finished, run `docker compose down`. The named volume retains the data for your next session.
+
+### Option 2 — Local notebook
 
 1. Install Python 3.12 or later and PostgreSQL. Create a database named `retail_project`.
-2. Open `data_preparation.ipynb` in a Jupyter-compatible editor with this folder as the working directory. Select a Python kernel and run the cells in order. The first code cell installs the dependencies.
-3. Adjust the database connection settings in the loading cell. Enter the PostgreSQL password when prompted; it is not stored in the notebook.
-4. Run the queries in `analysis.sql` individually in pgAdmin or another SQL client.
+2. Open `data_preparation.ipynb` in a Jupyter-compatible editor with the project folder as the working directory. Select a Python kernel and run the cells in order. The first code cell installs the dependencies.
+3. Before running the loading cell, check its connection settings. The defaults are `localhost`, port `5432`, and user `postgres`. Enter your PostgreSQL password when prompted.
 
-The loading cell replaces the contents of the four tables in the `retail_student` schema. It validates the row count and signed transaction value before committing.
+## Explore the results
 
-## Power BI
+| Connection setting | Docker database | Local PostgreSQL defaults |
+| --- | --- | --- |
+| Server for Power BI | `localhost:5433` | `localhost:5432` |
+| Database | `retail_project` | `retail_project` |
+| User | `postgres` | `postgres` |
+| Password | Value from `.env` | Your local PostgreSQL password |
 
-Connect using **Get data → PostgreSQL database**. For a default local installation, use server `localhost:5432`, database `retail_project`, and **Import** mode.
+**SQL.** Open [analysis.sql](analysis.sql) in pgAdmin or another SQL client. Run the four analysis queries individually to explore monthly sales, top-selling products, customer purchase frequency, and product cancellations. Two validation queries follow.
 
-Under **Advanced options → SQL statement**, paste the first analysis query without its final semicolon. Load it and repeat for the next three analysis queries. Do not include the validation queries.
+**Power BI.** Open the included report to explore the dashboard. To refresh it against your database, set the PostgreSQL connection in **Data source settings** to the server above. To rebuild the report, choose **Get data → PostgreSQL database → Import**. Under **Advanced options → SQL statement**, import each of the four analysis queries separately, omitting its final semicolon.
 
 | Query | Visual | Fields |
 | --- | --- | --- |
@@ -52,19 +71,23 @@ Under **Advanced options → SQL statement**, paste the first analysis query wit
 | Customer activity | Table | `customer_id`, `country`, `purchase_count`, `sales_value`, `customer_type` |
 | Product cancellations | Bar chart | `description`, `cancellation_value` |
 
-Format monetary values as GBP and customer IDs as identifiers rather than sums. These four summaries remain disconnected, so selections do not filter across tables. Refresh in Power BI reruns the SQL queries; PostgreSQL must be available.
+Format monetary values as GBP and treat customer IDs as identifiers. The four summaries are independent, so selections in one visual do not filter the others.
 
-## Data
+## Reading the numbers
 
-[Chen, D. (2015), Online Retail, UCI Machine Learning Repository](https://doi.org/10.24432/C5BW33), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Removing records with missing customer IDs limits coverage. Removing exact duplicates can also discard legitimate repeated purchases. Cancellations are counted on their invoice date, and the dataset does not link them to an original sale or verify a physical return. The dataset covers about one year and omits product costs and discounts, which limits conclusions about seasonality and profit.
 
-The source workbook contains 541,909 rows from December 2010 to December 2011. It is downloaded when the notebook runs and is not included in this repository.
+## Project files
 
-Preparation removes exact duplicates, missing customer identifiers, invalid records, and non-merchandise stock codes. Customers and products use their first retained country and description. Cancellation invoices retain negative quantities.
+| File | Purpose |
+| --- | --- |
+| `data_preparation.ipynb` | Interactive data preparation and loading |
+| `run_pipeline.py` | Python version of the notebook workflow for Docker |
+| `schema.sql` | PostgreSQL tables, keys, and constraints |
+| `analysis.sql` | Analysis and validation queries |
+| `Retail Sales & Cancellations.pbix` | Power BI dashboard |
+| `requirements.txt` | Python dependencies |
+| `Dockerfile` and `compose.yaml` | Python image, PostgreSQL service, and connection between them |
+| `.dockerignore` and `.gitignore` | Files excluded from the Docker build and Git, respectively |
 
-## Limitations
-
-- Excluding missing-customer records limits coverage. Identical source rows may represent legitimate repeated purchases.
-- Cancellation values follow cancellation dates and are not matched to original sales or verified physical returns.
-- Product costs and discounts are unavailable, so the analysis does not measure profit.
-- December 2011 contains only nine days and should not be compared with full months.
+The notebook and Docker runner implement the same preparation steps. When changing a cleaning rule, update both.
