@@ -32,3 +32,14 @@ The tested run loaded **398,070 transaction lines** and ended with **`Checks pas
 Open the Power BI dashboard to view the results, or run the queries in `analysis.sql` individually. To query or refresh against the Docker database, connect to `localhost:5433`, database `retail_project`, as `postgres` with the password from `.env`.
 
 For a step-by-step look at the cleaning decisions, open `data_preparation.ipynb`. When you finish querying, run `docker compose down`. The database volume retains the loaded data.
+
+## Automated tests and continuous integration
+
+The ETL cleaning and relational-modeling logic is shared in `retail_transform.py` by the production loader and the pytest suite. To run unit tests locally:
+
+```sh
+python -m pip install -r requirements.txt pytest
+python -m pytest tests/test_transform.py -v
+```
+
+The [GitHub Actions CI workflow](.github/workflows/ci.yml) runs on pushes and pull requests. It tests duplicates, invalid records, cancellations, calculated financial totals, and relational keys; builds the ETL Docker image; then runs an end-to-end Docker Compose smoke test with a small generated workbook. The integration check verifies that the PostgreSQL load succeeds and can be rerun without increasing the row count. CI does **not** download or process the 541K-row production dataset. It uses an isolated test database, and no database password is stored in the repository.

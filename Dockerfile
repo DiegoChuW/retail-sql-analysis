@@ -5,6 +5,6 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY schema.sql run_pipeline.py ./
+COPY schema.sql run_pipeline.py retail_transform.py ./
 
 CMD ["python", "run_pipeline.py"]
