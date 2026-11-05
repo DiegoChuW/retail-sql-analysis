@@ -1,13 +1,14 @@
 import os
-
-from pathlib import Path
-from decimal import Decimal
 import urllib.request
 import zipfile
-import pandas as pd
+from decimal import Decimal
+from pathlib import Path
 
-project = Path.cwd()
-assert (project / "schema.sql").exists(), "Open this notebook from the project folder."
+import pandas as pd
+import psycopg
+from psycopg import sql
+
+project = Path(__file__).resolve().parent
 data_folder = project / "data"
 data_folder.mkdir(exist_ok=True)
 workbook = data_folder / "Online Retail.xlsx"
@@ -23,10 +24,9 @@ if not workbook.exists():
 
 raw = pd.read_excel(workbook)
 print(f"Original rows: {len(raw):,}")
-raw.head()
 
 df = raw.drop_duplicates().copy()
-df["line_id"] = df.index + 2  
+df["line_id"] = df.index + 2  # Original Excel row; header is row 1.
 df = df.dropna(subset=["InvoiceNo", "StockCode", "CustomerID", "Description"])
 df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"], errors="coerce")
 df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce")
@@ -58,7 +58,6 @@ bad_invoices = headers.index[headers.gt(1).any(axis=1)]
 df = df.loc[~df["InvoiceNo"].isin(bad_invoices)].copy()
 df = df.sort_values(["InvoiceDate", "line_id"])
 print(f"Kept: {len(df):,}; excluded: {len(raw) - len(df):,}")
-df.head()
 
 customers = df.drop_duplicates("CustomerID")[["CustomerID", "Country"]].rename(
     columns={"CustomerID": "customer_id", "Country": "country"})
@@ -80,10 +79,12 @@ assert items["product_id"].isin(products["product_id"]).all()
 for name, table in [("customers", customers), ("products", products), ("orders", orders), ("order_items", items)]:
     print(name, len(table))
 
-import psycopg
-from psycopg import sql
-
-settings = {"host": os.environ.get("PGHOST", "db"), "port": int(os.environ.get("PGPORT", "5432")), "dbname": os.environ.get("PGDATABASE", "retail_project"), "user": os.environ.get("PGUSER", "retail_user")}
+settings = {
+    "host": os.environ.get("PGHOST", "db"),
+    "port": int(os.environ.get("PGPORT", "5432")),
+    "dbname": os.environ.get("PGDATABASE", "retail_project"),
+    "user": os.environ.get("PGUSER", "postgres"),
+}
 password = os.environ["PGPASSWORD"]
 try:
     with psycopg.connect(**settings, password=password) as conn:
