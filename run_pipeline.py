@@ -1,6 +1,3 @@
-"""Run the existing retail ETL notebook pipeline non-interactively.
-Derived from data_preparation.ipynb; keep transformation logic in sync.
-"""
 import os
 
 from pathlib import Path
@@ -29,7 +26,7 @@ print(f"Original rows: {len(raw):,}")
 raw.head()
 
 df = raw.drop_duplicates().copy()
-df["line_id"] = df.index + 2  # Original Excel row; header is row 1.
+df["line_id"] = df.index + 2  
 df = df.dropna(subset=["InvoiceNo", "StockCode", "CustomerID", "Description"])
 df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"], errors="coerce")
 df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce")
@@ -56,7 +53,6 @@ df["transaction_type"] = df["InvoiceNo"].str.upper().str.startswith("C").map(
     {True: "Cancellation", False: "Sale"}
 )
 
-# One invoice must have one customer and timestamp; exclude inconsistent headers.
 headers = df.groupby("InvoiceNo")[["CustomerID", "InvoiceDate"]].nunique()
 bad_invoices = headers.index[headers.gt(1).any(axis=1)]
 df = df.loc[~df["InvoiceNo"].isin(bad_invoices)].copy()
