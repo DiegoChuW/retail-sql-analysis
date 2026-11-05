@@ -1,0 +1,62 @@
+name: Retail Pipeline CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pytest
+
+      - name: Test real ETL transformations
+        run: python -m pytest tests/test_transform.py -v
+
+      - name: Build ETL container
+        run: docker build -t retail-etl-ci .
+
+      - name: Create small offline integration-test dataset
+        run: python tests/make_smoke_workbook.py
+
+      - name: Start PostgreSQL
+        env:
+          RETAIL_DB_PASSWORD: ci_test_password_only
+        run: docker compose up -d --wait db
+
+      - name: Run ETL through Docker Compose
+        env:
+          RETAIL_DB_PASSWORD: ci_test_password_only
+        run: docker compose --profile etl run --build --rm etl
+
+      - name: Verify loaded data and rerun safely
+        env:
+          RETAIL_DB_PASSWORD: ci_test_password_only
+        run: |
+          count=$(docker compose exec -T db psql -U postgres -d retail_project -tAc "SELECT COUNT(*) FROM retail_student.order_items")
+          test "$count" = "3"
+          docker compose --profile etl run --rm etl
+          count=$(docker compose exec -T db psql -U postgres -d retail_project -tAc "SELECT COUNT(*) FROM retail_student.order_items")
+          test "$count" = "3"
+
+      - name: Show Docker logs on failure
+        if: failure()
+        env:
+          RETAIL_DB_PASSWORD: ci_test_password_only
+        run: docker compose logs --no-color db
+
+      - name: Shut down test services
+        if: always()
+        env:
+          RETAIL_DB_PASSWORD: ci_test_password_only
+        run: docker compose down -v
