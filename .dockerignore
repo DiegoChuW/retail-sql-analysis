@@ -1,0 +1,8 @@
+.git
+.venv
+.ipynb_checkpoints
+__pycache__
+*.pbix
+*.ipynb
+data
+.env
